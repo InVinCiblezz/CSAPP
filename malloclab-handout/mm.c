@@ -36,6 +36,9 @@ team_t team = {
 };
 
 /* single word (4) or double word (8) alignment */
+#define ALIGNMENT 8
+#define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
+
 #define WSIZE   4
 #define DSIZE   8
 #define CHUNKSIZE   (1<<12)
