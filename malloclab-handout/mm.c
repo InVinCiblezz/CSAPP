@@ -55,7 +55,7 @@ team_t team = {
 
 #define NEXT_BLKP(ptr) ((void *)(ptr) + GET_SIZE(((void *)(ptr) - WSIZE)))
 #define PREV_BLKP(ptr) ((void *)(ptr) - GET_SIZE(((void *)(ptr) - DSIZE)))
-
+char *heap_listp;
 
 
 /* 
