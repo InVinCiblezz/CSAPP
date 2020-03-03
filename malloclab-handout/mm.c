@@ -37,6 +37,8 @@ team_t team = {
 
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
+/* rounds up to the nearest multiple of ALIGNMENT */
+#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
 #define WSIZE   4
@@ -58,8 +60,12 @@ team_t team = {
 
 #define NEXT_BLKP(ptr) ((void *)(ptr) + GET_SIZE(((void *)(ptr) - WSIZE)))
 #define PREV_BLKP(ptr) ((void *)(ptr) - GET_SIZE(((void *)(ptr) - DSIZE)))
-char *heap_listp;
 
+static void *extend_heap(size_t words);
+static void *find_fit(size_t asize);
+char *heap_listp;
+static void *place(void *ptr, size_t asize);
+static void *coalesce(void *ptr);
 
 /* 
  * mm_init - initialize the malloc package.
