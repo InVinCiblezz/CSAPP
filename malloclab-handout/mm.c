@@ -90,7 +90,7 @@ int mm_init(void)
         return -1;
     PUT(heap_listp, 0);
     PUT(heap_listp + WSIZE, PACK(OVERHEAD, 1));
-    PUT(heap_listp + DSIZE, PACK((OVERHEAD, 1)));
+    PUT(heap_listp + DSIZE, PACK(OVERHEAD, 1));
     heap_listp += DSIZE;
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
