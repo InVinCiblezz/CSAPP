@@ -50,8 +50,7 @@ team_t team = {
 #define PACK(size, alloc) ((size) | (alloc))
 
 #define GET(p)  (*(size_t *)(p))
-#define PUT(p, val) (*(size_t *)(p) = (val))
-
+#define PUT(p, val) (*(unsigned int *)(p) = (val))
 #define GET_SIZE(p) (GET(p) & ~0x7)
 #define GET_ALLOC(p) (GET(p) & 0x1)
 
@@ -64,7 +63,7 @@ team_t team = {
 static void *extend_heap(size_t words);
 static void *find_fit(size_t asize);
 char *heap_listp;
-static void *place(void *ptr, size_t asize);
+static void place(void *ptr, size_t asize);
 static void *coalesce(void *ptr);
 
 /* 
@@ -141,6 +140,7 @@ static void *find_fit(size_t asize)
 static void place(void *ptr, size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(ptr));
+
     if ((csize - asize) >= (DSIZE + OVERHEAD)) {
         PUT(HDRP(ptr), PACK(asize, 1));
         PUT(FTRP(ptr), PACK(asize, 1));
