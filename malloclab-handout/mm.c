@@ -47,6 +47,7 @@ team_t team = {
 #define OVERHEAD    8
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))
+
 #define PACK(size, alloc) ((size) | (alloc))
 
 #define GET(p)  (*(size_t *)(p))
@@ -60,11 +61,25 @@ team_t team = {
 #define NEXT_BLKP(ptr) ((void *)(ptr) + GET_SIZE(((void *)(ptr) - WSIZE)))
 #define PREV_BLKP(ptr) ((void *)(ptr) - GET_SIZE(((void *)(ptr) - DSIZE)))
 
+char *heap_listp;
 static void *extend_heap(size_t words);
 static void *find_fit(size_t asize);
-char *heap_listp;
 static void place(void *ptr, size_t asize);
 static void *coalesce(void *ptr);
+
+static void *extend_heap(size_t words)
+{
+    char *ptr;
+    size_t size;
+
+    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
+    if ((int)(ptr = mem_sbrk(size)) < 0)
+        return NULL;
+    PUT(HDRP(ptr), PACK(size, 0));
+    PUT(FTRP(ptr), PACK(size, 0));
+    PUT(HDRP(NEXT_BLKP(ptr)), PACK(0, 1));
+    return coalesce(ptr);
+}
 
 /* 
  * mm_init - initialize the malloc package.
@@ -84,19 +99,7 @@ int mm_init(void)
 }
 
 
-static void *extend_heap(size_t words)
-{
-    char *ptr;
-    size_t size;
 
-    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
-    if ((int)(ptr = mem_sbrk(size)) < 0)
-        return NULL;
-    PUT(HDRP(ptr), PACK(size, 0));
-    PUT(FTRP(ptr), PACK(size, 0));
-    PUT(HDRP(NEXT_BLKP(ptr)), PACK(0, 1));
-    return coalesce(ptr);
-}
 /* 
  * mm_malloc - Allocate a block by incrementing the brk pointer.
  *     Always allocate a block whose size is a multiple of the alignment.
