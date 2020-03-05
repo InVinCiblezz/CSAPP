@@ -54,14 +54,15 @@ team_t team = {
 
 #define GET(p)  (*(unsigned int *)(p))
 #define PUT(p, val) (*(unsigned int *)(p) = (val))
-#define GET_SIZE(p) (GET(p) & ~0x7)
-#define GET_ALLOC(p) (GET(p) & 0x1)
 
-#define HDRP(ptr) ((void *)(ptr) - WSIZE)
-#define FTRP(ptr) ((void *)(ptr) + GET_SIZE(HDRP(ptr)) - DSIZE)
+#define GET_SIZE(p) (GET(p) & (~0x7))
+#define GET_ALLOC(p)    (GET(p) & 0x1)
 
-#define NEXT_BLKP(ptr) ((void *)(ptr) + GET_SIZE(((void *)(ptr) - WSIZE)))
-#define PREV_BLKP(ptr) ((void *)(ptr) - GET_SIZE(((void *)(ptr) - DSIZE)))
+#define HDRP(bp)    ((char *)(bp) - WSIZE)
+#define FTRP(bp)   ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE)
+
+#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))
+#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
 char *heap_listp;
 static void *extend_heap(size_t words);
@@ -71,16 +72,17 @@ static void *coalesce(void *ptr);
 
 static void *extend_heap(size_t words)
 {
-    char *ptr;
+    char *bp;
     size_t size;
 
     size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
-    if ((int)(ptr = mem_sbrk(size)) < 0)
+    if ((long)(bp = mem_sbrk(size)) == -1)
         return NULL;
-    PUT(HDRP(ptr), PACK(size, 0));
-    PUT(FTRP(ptr), PACK(size, 0));
-    PUT(HDRP(NEXT_BLKP(ptr)), PACK(0, 1));
-    return coalesce(ptr);
+
+    PUT(HDRP(bp), PACK(size, 0));
+    PUT(FTRP(bp), PACK(size, 0));
+    PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));
+    return coalesce(bp);
 }
 
 /* 
@@ -91,10 +93,10 @@ int mm_init(void)
     if ((heap_listp = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
     PUT(heap_listp, 0);
-    PUT(heap_listp + WSIZE, PACK(OVERHEAD, 1));
-    PUT(heap_listp + DSIZE, PACK(OVERHEAD, 1));
-    PUT(heap_listp + WSIZE + DSIZE, PACK(0, 1));
-    heap_listp += DSIZE;
+    PUT(heap_listp + 1 * WSIZE, PACK(DSIZE, 1));
+    PUT(heap_listp + 2 * WSIZE, PACK(DSIZE, 1));
+    PUT(heap_listp + 3* WSIZE, PACK(0, 1));
+    heap_listp += 2 * WSIZE;
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
