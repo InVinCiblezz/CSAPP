@@ -41,16 +41,18 @@ team_t team = {
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-#define WSIZE   4
-#define DSIZE   8
-#define CHUNKSIZE   (1<<12)
+//size t size = GET SIZE(HDRP(NEXT BLKP(bp)));
+
+#define WSIZE	4
+#define DSIZE		8
+#define CHUNKSIZE	(1<<12)
 #define OVERHEAD    8
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))
 
 #define PACK(size, alloc) ((size) | (alloc))
 
-#define GET(p)  (*(size_t *)(p))
+#define GET(p)  (*(unsigned int *)(p))
 #define PUT(p, val) (*(unsigned int *)(p) = (val))
 #define GET_SIZE(p) (GET(p) & ~0x7)
 #define GET_ALLOC(p) (GET(p) & 0x1)
@@ -118,7 +120,7 @@ void *mm_malloc(size_t size)
     if (size <= DSIZE)
         asize = DSIZE + OVERHEAD;
     else
-        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE-1)) / DSIZE);
+        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
     /* Search the free list for a fit */
     if ((ptr = find_fit(asize)) != NULL) {
         place(ptr, asize);
@@ -178,7 +180,7 @@ static void *coalesce(void *ptr)
     if (prev_alloc && next_alloc){
         return ptr;
     }
-    else if(prev_alloc && !next_alloc) {
+    else if (prev_alloc && !next_alloc) {
         size += GET_SIZE(HDRP(NEXT_BLKP(ptr)));
         PUT(HDRP(ptr), PACK(size, 0));
         PUT(FTRP(ptr), PACK(size,0));
@@ -190,7 +192,7 @@ static void *coalesce(void *ptr)
         PUT(HDRP(PREV_BLKP(ptr)), PACK(size, 0));
         return(PREV_BLKP(ptr));
     }
-    else { /* Case 4 */
+    else {
         size += GET_SIZE(HDRP(PREV_BLKP(ptr))) + GET_SIZE(FTRP(NEXT_BLKP(ptr)));
         PUT(HDRP(PREV_BLKP(ptr)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP(ptr)), PACK(size, 0));
