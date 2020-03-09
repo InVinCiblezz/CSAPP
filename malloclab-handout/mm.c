@@ -133,7 +133,6 @@ void *mm_malloc(size_t size)
 
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
-        PUT(bp, )
         place(bp, asize);
         return bp;
     }
