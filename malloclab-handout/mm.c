@@ -86,7 +86,7 @@ static void place(void *bp, size_t asize);
 static void realloc_place(void *bp, size_t asize);
 static void *coalesce(void *bp);
 static void *realloc_coalesce(void *bp, size_t newSize, int *isNextFree);
-static void insert_node(void *bp, size);
+static void insert_node(void *bp, size_t size);
 static void delete_node(void *bp);
 static int get_index(size_t size);
 static size_t get_asize(size_t size);
@@ -170,7 +170,7 @@ static void *find_fit(size_t asize)
     for (; index < LISTLENGTH; index++, size >>= 1) {
         if ((size > 1) || (seg_lists[index] == NULL))
             continue;
-        char *i = seg_lists[index]
+        char *i = seg_lists[index];
         for(; i != NULL; i = GET_SUCC(i)) {
             if (GET_SIZE(HDRP(i)) >= asize) {
                 bp = i;
