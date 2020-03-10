@@ -146,19 +146,43 @@ void *mm_malloc(size_t size)
     /* Ignore spurious requests */
     if (size <= 0)
         return NULL;
-
+    
     asize = get_asize(size);
-    /* Search the free list for a fit */
-    if ((bp = find_fit(asize)) != NULL) {
-        place(bp, asize);
-        return bp;
+    size_t list_size = asize;
+    int index = 0;
+    for (; index < LISTLENGTH; index++, list_size >>= 1) {
+        /* find target seg_free_list*/
+        if ((list_size > 1) || (seg_lists[index] == NULL))
+            continue;
+        char *i = seg_lists[index];
+        for(; i != NULL; i = GET_SUCC(i))
+        {
+            if (GET_SIZE(HDRP(i)) >= asize) {
+                bp = i;
+                break;
+            }
+        }
     }
+    if (bp == NULL) {
+        /* No fit found. Get more memory and place the block */
+        extendsize = MAX(asize,CHUNKSIZE);
+        if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
+            return NULL;
+    }
+    /*
+     *
 
-    /* No fit found. Get more memory and place the block */
-    extendsize = MAX(asize, CHUNKSIZE);
-    if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
-        return NULL;
-    place(bp, asize);
+    /* Search the free list for a fit */
+    //if ((bp = find_fit(asize)) != NULL) {
+    //    place(bp, asize);
+    //    return bp;
+    //}
+    ///* No fit found. Get more memory and place the block */
+    //extendsize = MAX(asize, CHUNKSIZE);
+    //if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
+    //    return NULL;
+    //place(bp, asize);
+
     return bp;
 }
 
@@ -173,7 +197,6 @@ static void *find_fit(size_t asize)
                 return i;
             }
         }
-
     }
     return NULL;
 }
