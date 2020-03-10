@@ -164,24 +164,17 @@ void *mm_malloc(size_t size)
 /* find fit bp in the seg_list */
 static void *find_fit(size_t asize)
 {
-    size_t size = asize;
-    char *bp;
-    int index = 0;
-    for (; index < LISTLENGTH; index++, size >>= 1) {
-        if ((size > 1) || (seg_lists[index] == NULL))
-            continue;
+    int index = get_index(asize);
+    for (; index < LISTLENGTH; index++) {
         char *i = seg_lists[index];
         for(; i != NULL; i = GET_SUCC(i)) {
             if (GET_SIZE(HDRP(i)) >= asize) {
-                bp = i;
-                break;
+                return i;
             }
         }
-        if (bp != NULL)
-            break;
-    }
 
-    return bp;
+    }
+    return NULL;
 }
 //fine
 static void place(void *bp, size_t asize)
