@@ -68,8 +68,8 @@ team_t team = {
 #define PUT_SUCC(p, val) (PUT(SUCC(p), (unsigned int)(val)))
 
 /* Read the pred and succ from address p */
-#define GET_PRED(p) (*(char **)(p))
-#define GET_SUCC(p) (*(char **)(p) + WISZE)
+#define GET_PRED(p) ((char *)GET(p))
+#define GET_SUCC(p) ((char *)GET(SUCC(p)))
 
 /* Given block ptr bp, compute address of its header and footer */
 #define HDRP(bp)    ((char *)(bp) - WSIZE)
@@ -383,7 +383,8 @@ static void delete_node(void *bp)
         if (GET_SUCC(bp) != NULL)
             PUT_PRED(GET_SUCC(bp), NULL);
     } else if (GET_SUCC(bp) == NULL) {
-        PUT_SUCC(GET_PRED(bp), NULL);
+        if (GET_PRED(bp) != NULL)
+            PUT_SUCC(GET_PRED(bp), NULL);
     } else {
         PUT_SUCC(GET_PRED(bp), GET_SUCC(bp));
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
