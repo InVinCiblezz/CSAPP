@@ -64,8 +64,8 @@ team_t team = {
 
 #define SUCC(p) ((char *)(p) + WSIZE)
 /* Given block ptr p, set the pred and succ address */
-#define PUT_PRED(p, val) (PUT((p), val))
-#define PUT_SUCC(p, val) (PUT(SUCC(p), val))
+#define PUT_PRED(p, val) (PUT((p), (unsigned int)(val)))
+#define PUT_SUCC(p, val) (PUT(SUCC(p), (unsigned int)(val)))
 
 /* Read the pred and succ from address p */
 #define GET_PRED(p) (*(char **)GET(p))
