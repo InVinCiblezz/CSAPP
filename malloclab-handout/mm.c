@@ -68,8 +68,8 @@ team_t team = {
 #define PUT_SUCC(p, val) (PUT(SUCC(p), (unsigned int)(val)))
 
 /* Read the pred and succ from address p */
-#define GET_PRED(p) (*(char **)GET(p))
-#define GET_SUCC(p) (*(char **)GET(SUCC(p)))
+#define GET_PRED(p) (*(char **)(p))
+#define GET_SUCC(p) (*(char **)(p) + WISZE)
 
 /* Given block ptr bp, compute address of its header and footer */
 #define HDRP(bp)    ((char *)(bp) - WSIZE)
@@ -375,7 +375,7 @@ static void insert_node(void *bp, size_t size)
 //fine
 static void delete_node(void *bp)
 {
-    size_t size = GET_SIZE(HDRP(bp)), list_size;
+    size_t size = GET_SIZE(HDRP(bp));
     int index = get_index(size);
 
     if (GET_PRED(bp) == NULL) {
