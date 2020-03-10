@@ -123,8 +123,9 @@ int mm_init(void)
     PUT(heap_listp + 2 * WSIZE, PACK(DSIZE, 1));
     PUT(heap_listp + 3 * WSIZE, PACK(0, 1));
     heap_listp += 2 * WSIZE;
-    for(int i = 0; i < LISTLENGTH; ++i)
-        seg_list[i] = NULL;
+    int i = 0;
+    for(; i < LISTLENGTH; ++i)
+        seg_lists[i] = NULL;
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
     heap_listp = NULL;
@@ -164,7 +165,9 @@ void *mm_malloc(size_t size)
 static void *find_fit(size_t asize)
 {
     size_t size = asize;
-    for (int index = 0; index < LISTLENGTH; index++, size >>= 1) {
+    char *bp;
+    int index = 0;
+    for (; index < LISTLENGTH; index++, size >>= 1) {
         if ((size > 1) || (seg_lists[index] == NULL))
             continue;
         for(char *i = seg_lists[index]; i != NULL; i = GET_SUCC(i)) {
@@ -187,7 +190,7 @@ static void place(void *bp, size_t asize)
     if ((csize - asize) < (DSIZE + OVERHEAD)) {
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
-        return; bp;
+        return bp;
     } else if (asize >= 96) {
         PUT(HDRP(bp), PACK((csize - asize), 0));
         PUT(FTRP(bp), PACK((csize - asize), 0));
@@ -388,8 +391,8 @@ static void delete_node(void *bp)
 
 static int get_index(size_t size){
     int index = 0;
-    size_t list_size;
-    for (list_size = size; (list_size > 1) && (index < LISTLENGTH - 1); index++;) {
+    size_t list_size = size;
+    for (; (list_size > 1) && (index < LISTLENGTH - 1); index++) {
         list_size >>= 1;
     }
     return index;
