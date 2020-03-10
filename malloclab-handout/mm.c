@@ -197,7 +197,7 @@ static void place(void *bp, size_t asize)
         PUT(FTRP(bp), PACK((csize - asize), 0));
         PUT(HDRP(NEXT_BLKP(bp)), PACK((asize), 1));
         PUT(FTRP(NEXT_BLKP(bp)), PACK((asize), 1));
-        insert_node(bp);
+        insert_node(bp, csize - asize);
         return NEXT_BLKP(bp);
     }
     else {
