@@ -34,16 +34,6 @@ team_t team = {
     /* Second member's email address (leave blank if none) */
     ""
 };
-#define DEBUG 1
-/* If you want debugging output, use the following macro.  When you hand
- * in, remove the #define DEBUG line. */
-#ifdef DEBUG
-# define DBG_PRINTF(...) printf(__VA_ARGS__)
-# define dbg_printblock(bp) printblock(bp)
-#else
-# define DBG_PRINTF(...)
-# define dbg_printblock(bp)
-#endif
 
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
@@ -74,12 +64,12 @@ team_t team = {
 
 #define SUCC(p) ((char *)(p) + WSIZE)
 /* Given block ptr p, set the pred and succ address */
-#define PUT_PRED(p, val) (PUT((p), (unsigned int)(val)))
+#define PUT_PRED(p, val) (PUT((char *)(p), (unsigned int)(val)))
 #define PUT_SUCC(p, val) (PUT(SUCC(p), (unsigned int)(val)))
 
 /* Read the pred and succ from address p */
-#define GET_PRED(p) ((char *)GET(p))
-#define GET_SUCC(p) ((char *)GET(SUCC(p)))
+#define GET_PRED(p) (*(char **)(p))
+#define GET_SUCC(p) (*(char **)SUCC(p))
 
 /* Given block ptr bp, compute address of its header and footer */
 #define HDRP(bp)    ((char *)(bp) - WSIZE)
@@ -100,6 +90,8 @@ static void insert_node(void *bp, size_t size);
 static void delete_node(void *bp);
 static int get_index(size_t size);
 static size_t get_asize(size_t size);
+void checkheap(int verbose);
+void mm_checkheap(int verbose);
 void *seg_lists[LISTLENGTH];
 //fine
 static void *extend_heap(size_t words)
@@ -138,7 +130,6 @@ int mm_init(void)
         seg_lists[i] = NULL;
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
-    CHECKHEAP(1);
     return 0;
 }
 
@@ -168,7 +159,6 @@ void *mm_malloc(size_t size)
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         return NULL;
     place(bp, asize);
-    CHECKHEAP(1);
     return bp;
 }
 
@@ -231,7 +221,6 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
-    CHECKHEAP(1);
 }
 //fine
 static void *coalesce(void *bp)
@@ -388,8 +377,7 @@ static void delete_node(void *bp)
         if (GET_SUCC(bp) != NULL)
             PUT_PRED(GET_SUCC(bp), NULL);
     } else if (GET_SUCC(bp) == NULL) {
-        if (GET_PRED(bp) != NULL)
-            PUT_SUCC(GET_PRED(bp), NULL);
+        PUT_SUCC(GET_PRED(bp), NULL);
     } else {
         PUT_SUCC(GET_PRED(bp), GET_SUCC(bp));
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
@@ -406,117 +394,6 @@ static int get_index(size_t size){
 }
 
 void mm_checkheap(int);
-/* below code if for check heap invarints */
-
-static void printblock(void *bp)
-{
-    long int hsize, halloc, fsize, falloc;
-
-    hsize = GET_SIZE(HDRP(bp));
-    halloc = GET_ALLOC(HDRP(bp));
-    fsize = GET_SIZE(FTRP(bp));
-    falloc = GET_ALLOC(FTRP(bp));
-
-    if (hsize == 0) {
-        printf("%p: EOL\n", bp);
-        return;
-    }
-
-    printf("%p: header: [%ld:%c] footer: [%ld:%c]\n", bp,
-           hsize, (halloc ? 'a' : 'f'),
-           fsize, (falloc ? 'a' : 'f'));
-}
-
-static int checkblock(void *bp)
-{
-    //area is aligned
-    if ((size_t)bp % 8)
-        printf("Error: %p is not doubleword aligned\n", bp);
-    //header and footer match
-    if (GET(HDRP(bp)) != GET(FTRP(bp)))
-        printf("Error: header does not match footer\n");
-    size_t size = GET_SIZE(HDRP(bp));
-    //size is valid
-    if (size % 8)
-        printf("Error: %p payload size is not doubleword aligned\n", bp);
-    return GET_ALLOC(HDRP(bp));
-}
-
-static void printlist(void *i, long size)
-{
-    long int hsize, halloc;
-
-    for(;i != NULL;i = SUCC(i))
-    {
-        hsize = GET_SIZE(HDRP(i));
-        halloc = GET_ALLOC(HDRP(i));
-        printf("[listnode %ld] %p: header: [%ld:%c] prev: [%p]  next: [%p]\n",
-               size, i,
-               hsize, (halloc ? 'a' : 'f'),
-               PRED(i), SUCC(i));
-    }
-}
-static void checklist(void *i, size_t tar)
-{
-    void *pre = NULL;
-    long int hsize, halloc;
-    for(;i != NULL;i = SUCC(i))
-    {
-        if (PRED(i) != pre) printf("Error: pred point error\n");
-        if (pre != NULL && SUCC(pre) != i) printf("Error: succ point error\n");
-        hsize = GET_SIZE(HDRP(i));
-        halloc = GET_ALLOC(HDRP(i));
-        if (halloc) printf("Error: list node should be free\n");
-        if (pre != NULL && (GET_SIZE(HDRP(pre)) > hsize))
-            printf("Error: list size order error\n");
-        if (hsize < tar || ((tar != (1<<15)) && (hsize > (tar << 1)-1)))
-            printf("Error: list node size error\n");
-        pre = i;
-    }
-}
-/*
- * mm_checkheap - Check the heap for correctness
- */
-void mm_checkheap(int verbose)
-{
-    checkheap(verbose);
-}
-//heap level
-void checkheap(int verbose)
-{
-    char *bp = heap_listp;
-
-    if (verbose)
-        printf("Heap (%p):\n", heap_listp);
-
-    if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp)))
-        printf("Bad prologue header\n");
-    // block level
-    checkblock(heap_listp);
-    int pre_free = 0;
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-        if (verbose)
-            printblock(bp);
-        int cur_free = checkblock(bp);
-        //no contiguous free blocks
-        if (pre_free && cur_free) {
-            printf("Contiguous free blocks\n");
-        }
-    }
-    //list level
-    int i = 0, tarsize = 1;
-    for (; i < LISTMAX; i++) {
-        if (verbose)
-            printlist(seg_free_lists[i], tarsize);
-        checklist(seg_free_lists[i],tarsize);
-        tarsize <<= 1;
-    }
-
-    if (verbose)
-        printblock(bp);
-    if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
-        printf("Bad epilogue header\n");
-}
 
 
 
