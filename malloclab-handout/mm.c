@@ -68,8 +68,8 @@ team_t team = {
 #define PUT_SUCC(p, val) (PUT(SUCC(p), val))
 
 /* Read the pred and succ from address p */
-#define GET_PRED(p) (GET(p))
-#define GET_SUCC(p) (GET(SUCC(p)))
+#define GET_PRED(p) (*(char **)GET(p))
+#define GET_SUCC(p) (*(char **)GET(SUCC(p)))
 
 /* Given block ptr bp, compute address of its header and footer */
 #define HDRP(bp)    ((char *)(bp) - WSIZE)
