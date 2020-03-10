@@ -56,7 +56,7 @@ team_t team = {
 
 /* Read and write a word at address p */
 #define GET(p)      (*(unsigned int *)(p))
-#define PUT(p, val) (*(unsigned int *)(p) = (val))
+#define PUT(p, val) (*(unsigned int *)(p) = (unsigned int)(val))
 
 /* Read the size and allocated fields from address p */
 #define GET_SIZE(p)     (GET(p) & (~0x7))
@@ -64,8 +64,8 @@ team_t team = {
 
 #define SUCC(p) ((char *)(p) + WSIZE)
 /* Given block ptr p, set the pred and succ address */
-#define PUT_PRED(p, val) (PUT((char *)(p), (unsigned int)(val)))
-#define PUT_SUCC(p, val) (PUT(SUCC(p), (unsigned int)(val)))
+#define PUT_PRED(p, val) (PUT((char *)(p), val))
+#define PUT_SUCC(p, val) (PUT(SUCC(p), val))
 
 /* Read the pred and succ from address p */
 #define GET_PRED(p) (*(char **)(p))
