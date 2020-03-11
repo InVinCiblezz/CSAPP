@@ -51,7 +51,6 @@ team_t team = {
 #define INITSIZE (1<<6) /* Extend heap by this amount (bytes) in init*/
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))
-#define MIN(x, y) ((x) < (y)? (x) : (y))
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc) ((size) | (alloc))
 
@@ -173,7 +172,7 @@ void *mm_malloc(size_t size)
     }
     if (bp == NULL) {
         /* No fit found. Get more memory and place the block */
-        extendsize = MAX(asize,CHUNKSIZE);
+        extendsize = MAX(asize, CHUNKSIZE);
         if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
             return NULL;
     }
@@ -308,11 +307,11 @@ void *mm_realloc(void *ptr, size_t size)
  * realloc_place - place block.
  *
  */
-static void realloc_place(void *bp,size_t asize)
+static void realloc_place(void *bp, size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(bp));
-    PUT(HDRP(bp),PACK(csize,1));
-    PUT(FTRP(bp),PACK(csize,1));
+    PUT(HDRP(bp), PACK(csize, 1));
+    PUT(FTRP(bp), PACK(csize, 1));
 }
 
 /*
