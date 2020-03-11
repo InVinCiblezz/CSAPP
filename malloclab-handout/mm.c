@@ -124,11 +124,11 @@ int mm_init(void)//done
     PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1));      /* Prologue footer */
     PUT(heap_listp + (3 * WSIZE), PACK(0, 1));          /* Epilogue header */
     heap_listp += (2 * WSIZE);
-    int i;
-    for (i = 0; i < LISTLENGTH; i++) {
+    int i = 0;
+    for (; i < LISTLENGTH; i++) {
         seg_lists[i] = NULL;
     }
-    /* Extend the empty heap with a free block of CHUNKSIZE bytes */
+    /* Extend the empty heap with a free block of INITSIZE bytes */
     if (extend_heap(INITSIZE/WSIZE) == NULL)
         return -1;
     return 0;
@@ -151,8 +151,7 @@ void *mm_malloc(size_t size)
     asize = get_asize(size);
     size_list = asize;
     int index = 0;
-    for (; index < LISTLENGTH; index++, size_list >>= 1) {
-        /* find index seg_free_list*/
+    for (; index < LISTLENGTH; index++, size_list >>= 1) { // find index in seg_list
         if ((size_list > 1) || (seg_lists[index] == NULL))
             continue;
         char *i = seg_lists[index];
@@ -171,8 +170,7 @@ void *mm_malloc(size_t size)
         if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
             return NULL;
     }
-    bp = place(bp, asize);
-    return bp;
+    return place(bp, asize);
 }
 
 static void *place(void *bp, size_t asize)
@@ -261,12 +259,12 @@ void *mm_realloc(void *ptr, size_t size)
     if(copySize > asize) {          // just replace
         realloc_place(ptr, asize);
         return ptr;
-    } else if (copySize == asize){  //just return
+    } else if (copySize == asize){  // just return
         return ptr;
     } else {
         int isNextFree;
         char *bp = realloc_coalesce(ptr, asize, &isNextFree);
-        /* next block is free */
+        // next block is free
         if(isNextFree == 1){
             realloc_place(bp, asize);
         } else if(isNextFree == 0 && bp != ptr){
@@ -281,6 +279,7 @@ void *mm_realloc(void *ptr, size_t size)
         return bp;
     }
 }
+
 static void realloc_place(void *bp,size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(bp));
@@ -299,42 +298,36 @@ static size_t get_asize(size_t size)
     return asize;
 }
 
-static void *realloc_coalesce(void *bp,size_t newSize,int *isNextFree)
+static void *realloc_coalesce(void *bp, size_t newSize, int *isNextFree)
 {
     size_t  prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
     size_t  next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
     *isNextFree = 0;
     /*coalesce the block and change the point*/
-    if(prev_alloc && !next_alloc)
-    {
+    if(prev_alloc && !next_alloc) {                     /* Case 2 */
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
-        if(size>=newSize)
-        {
+        if(size >= newSize) {
             delete_node(NEXT_BLKP(bp));
             PUT(HDRP(bp), PACK(size, 1));
             PUT(FTRP(bp), PACK(size, 1));
             *isNextFree = 1;
         }
     }
-    else if(!prev_alloc && next_alloc)
-    {
+    else if(!prev_alloc && next_alloc) {                /* Case 3 */
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
-        if(size >= newSize)
-        {
+        if(size >= newSize) {
             delete_node(PREV_BLKP(bp));
             PUT(FTRP(bp), PACK(size, 1));
             PUT(HDRP(PREV_BLKP(bp)), PACK(size, 1));
             bp = PREV_BLKP(bp);
         }
     }
-    else if(!prev_alloc && !next_alloc)
-    {
+    else if(!prev_alloc && !next_alloc) {               /* Case 4 */
         size += GET_SIZE(FTRP(NEXT_BLKP(bp))) + GET_SIZE(HDRP(PREV_BLKP(bp)));
-        if(size >= newSize)
-        {
-            delete_node(PREV_BLKP(bp));
+        if(size >= newSize) {
             delete_node(NEXT_BLKP(bp));
+            delete_node(PREV_BLKP(bp));
             PUT(FTRP(NEXT_BLKP(bp)),PACK(size, 1));
             PUT(HDRP(PREV_BLKP(bp)),PACK(size, 1));
             bp = PREV_BLKP(bp);
