@@ -141,7 +141,7 @@ void *mm_malloc(size_t size)
 {
     size_t asize, size_list;    /* Adjusted block size */
     size_t extendsize;          /* Amount to extend heap if no fit */
-    char *bp;
+    char *bp = NULL;
 
     /* Ignore spurious requests */
     if (size == 0)
@@ -255,20 +255,23 @@ void *mm_realloc(void *ptr, size_t size)
     }
 
     void *newptr;
-    size_t asize, oldsize;
-    oldsize = GET_SIZE(HDRP(ptr));
-    asize = get_asize(size);
-    if(oldsize < asize)
-    {
-        int isnextFree;
-        char *bp = realloc_coalesce(ptr, asize, &isnextFree);
-        if(isnextFree == 1){ /*next block is free*/
-            realloc_place(bp,asize);
-        } else if(isnextFree == 0 && bp != ptr){ /*previous block is free, move the point to new address,and move the payload*/
+    size_t copySize = GET_SIZE(HDRP(ptr));
+    size_t asize = get_asize(size);
+    if(copySize > asize) {          // just replace
+        realloc_place(ptr, asize);
+        return ptr;
+    } else if (copySize == asize){  //just return
+        return ptr;
+    } else {
+        int isNextFree;
+        char *bp = realloc_coalesce(ptr, asize, &isNextFree);
+        /* next block is free */
+        if(isNextFree == 1){
+            realloc_place(bp, asize);
+        } else if(isNextFree == 0 && bp != ptr){
             memcpy(bp, ptr, size);
-            realloc_place(bp,asize);
+            realloc_place(bp, asize);
         }else{
-            /*realloc_coalesce is fail*/
             newptr = mm_malloc(size);
             memcpy(newptr, ptr, size);
             mm_free(ptr);
@@ -276,11 +279,6 @@ void *mm_realloc(void *ptr, size_t size)
         }
         return bp;
     }
-    else if(oldsize > asize) {/*just change the size of ptr*/
-        realloc_place(ptr,asize);
-        return ptr;
-    }
-    return ptr;
 }
 static void realloc_place(void *bp,size_t asize)
 {
