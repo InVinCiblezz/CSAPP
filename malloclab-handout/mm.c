@@ -436,7 +436,7 @@ static void checklist()
     int index = 0;
     for(;index < LISTLENGTH; index++){
         char *i = seg_lists[index];
-        while(bp != NULL){
+        while(i != NULL){
             printf("seg list %d, addr %p, size %d, next %p, prev %p\n", index, i, GET_SIZE(HDRP(i)), GET_SUCC(i), GET_PRED(i));
             i = GET_SUCC(i);
         }
