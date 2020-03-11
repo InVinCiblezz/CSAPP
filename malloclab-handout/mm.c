@@ -34,7 +34,7 @@ team_t team = {
         /* Second member's email address (leave blank if none) */
         ""
 };
-#define DEBUG 1
+//#define DEBUG 1
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
 #define LISTLENGTH 16
@@ -90,7 +90,7 @@ static void insert_node(void *bp, size_t size);
 static void delete_node(void *bp);
 static size_t get_asize(size_t size);
 void *seg_lists[LISTLENGTH];
-static void checklist();
+static void mm_check();
 
 /*
  * extend_heap - extend the heap when it is full.
@@ -136,7 +136,7 @@ int mm_init(void)//done
     if (extend_heap(INITSIZE/WSIZE) == NULL)
         return -1;
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
         return 0;
 }
@@ -178,7 +178,7 @@ void *mm_malloc(size_t size)
             return NULL;
     }
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
         return place(bp, asize);
 }
@@ -244,7 +244,7 @@ static void *coalesce(void *bp)
     }
     insert_node(bp, size);
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
         return bp;
 }
@@ -259,7 +259,7 @@ void mm_free(void *bp)
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
 }
 
@@ -390,7 +390,7 @@ static void insert_node(void *bp, size_t size)
         PUT_SUCC(pre, bp);
     }
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
 }
 
@@ -398,25 +398,27 @@ static void insert_node(void *bp, size_t size)
  * delete_node - delete the node from seg_lists.
  *
  */
-static void delete_node(void *bp)//done
+static void delete_node(void *bp)
 {
     size_t list_size = GET_SIZE(HDRP(bp));
     int index = 0;
-    for (; (list_size > 1) && (index < LISTLENGTH - 1); index++) {
+    for (; (index < LISTLENGTH - 1) && (list_size > 1); index++) {
         list_size >>= 1;
     }
-    if (GET_PRED(bp) == NULL) {
-        seg_lists[index] = GET_SUCC(bp);
-        if (GET_SUCC(bp) != NULL)
+    void *prev = GET_PRED(bp);
+    void *next = GET_SUCC(bp);
+    if (prev == NULL) {                             //prev is empty
+        seg_lists[index] = next;
+        if (next != NULL)
             PUT_PRED(GET_SUCC(bp), NULL);
-    } else if (GET_SUCC(bp) == NULL) {
+    } else if (GET_SUCC(bp) != NULL) {              //next is empty
         PUT_SUCC(GET_PRED(bp), NULL);
     } else {
         PUT_SUCC(GET_PRED(bp), GET_SUCC(bp));
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
     }
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
 }
 
@@ -430,8 +432,9 @@ static size_t get_asize(size_t size)
         asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
     return asize;
 }
+
 /* Check the status of list. */
-static void checklist()
+static void mm_check()()
 {
     int index = 0;
     for(;index < LISTLENGTH; index++){
