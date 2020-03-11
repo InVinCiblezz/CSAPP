@@ -398,22 +398,24 @@ static void insert_node(void *bp, size_t size)
  * delete_node - delete the node from seg_lists.
  *
  */
-static void delete_node(void *bp)//done
+static void delete_node(void *bp)
 {
     size_t list_size = GET_SIZE(HDRP(bp));
     int index = 0;
     for (; (list_size > 1) && (index < LISTLENGTH - 1); index++) {
         list_size >>= 1;
     }
-    if (GET_PRED(bp) == NULL) {
-        seg_lists[index] = GET_SUCC(bp);
-        if (GET_SUCC(bp) != NULL)
-            PUT_PRED(GET_SUCC(bp), NULL);
-    } else if (GET_SUCC(bp) == NULL) {
+    char *prev = GET_PRED(bp);
+    char *next = GET_SUCC(bp);
+    if (prev == NULL) {
+        seg_lists[index] = next;
+        if (next != NULL)
+            PUT_PRED(next, NULL);
+    } else if (next == NULL) {
         PUT_SUCC(GET_PRED(bp), NULL);
     } else {
-        PUT_SUCC(GET_PRED(bp), GET_SUCC(bp));
-        PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
+        PUT_SUCC(prev, next);
+        PUT_PRED(next, prev);
     }
 #ifdef DEBUG
     mm_check();
