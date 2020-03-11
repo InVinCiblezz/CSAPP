@@ -1,13 +1,26 @@
 /*
- * mm-naive.c - The fastest, least memory-efficient malloc package.
+ * mm.c
  *
- * In this naive approach, a block is allocated by simply incrementing
- * the brk pointer.  A block is pure payload. There are no headers or
- * footers.  Blocks are never coalesced or reused. Realloc is
- * implemented directly using mm_malloc and mm_free.
+ * Segregated Free Lists
+ * 
+ * Structure:
+ * Free block: /header/pred/succ/padding/footer/
+ * Allocated block: /header/payload/padding/footer/
  *
- * NOTE TO STUDENTS: Replace this header comment with your own header
- * comment that gives a high level description of your solution.
+ *
+ * Malloc:
+ * Calculate asize and then use the right shift to locate the corresponding seg_list,
+ * and then loop to find the first satisfying free block.
+ * Do the PLACE operation. If not found, go to the next seg_list until found or extend head.
+ *
+ * Free:
+ * First set the block to free and coalesce.
+ *
+ * REALLOC:
+ * Calculates asize. If asize is smaller than the original block size, it returns the original block directly.
+ * Otherwise, it is checked whether the next block or the previous block can be absorbed.
+ * Or MALLOC, MEMPCY, and FREE.
+ *
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,7 +130,7 @@ static void *extend_heap(size_t words)
 /*
  * mm_init - initialize the malloc package.
  */
-int mm_init(void)//done
+int mm_init(void)
 {
     /* Create the initial empty heap */
     if ((heap_listp = mem_sbrk(4 * WSIZE)) == NULL)
