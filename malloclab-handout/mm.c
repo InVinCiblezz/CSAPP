@@ -135,10 +135,10 @@ int mm_init(void)//done
     /* Extend the empty heap with a free block of INITSIZE bytes */
     if (extend_heap(INITSIZE/WSIZE) == NULL)
         return -1;
-    #ifdef DEBUG
-        mm_check();
-    #endif
-        return 0;
+#ifdef DEBUG
+    mm_check();
+#endif
+    return 0;
 }
 
 /*
@@ -177,10 +177,10 @@ void *mm_malloc(size_t size)
         if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
             return NULL;
     }
-    #ifdef DEBUG
-        mm_check();
-    #endif
-        return place(bp, asize);
+#ifdef DEBUG
+    mm_check();
+#endif
+    return place(bp, asize);
 }
 /*
  * place - place block.
@@ -243,10 +243,10 @@ static void *coalesce(void *bp)
         bp = PREV_BLKP(bp);
     }
     insert_node(bp, size);
-    #ifdef DEBUG
-        mm_check();
-    #endif
-        return bp;
+#ifdef DEBUG
+    mm_check();
+#endif
+    return bp;
 }
 
 /*
@@ -258,9 +258,9 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
-    #ifdef DEBUG
-        mm_check();
-    #endif
+#ifdef DEBUG
+    mm_check();
+#endif
 }
 
 /*
@@ -389,9 +389,9 @@ static void insert_node(void *bp, size_t size)
         PUT_PRED(i, bp);
         PUT_SUCC(pre, bp);
     }
-    #ifdef DEBUG
-        mm_check();
-    #endif
+#ifdef DEBUG
+    mm_check();
+#endif
 }
 
 /*
@@ -415,9 +415,9 @@ static void delete_node(void *bp)//done
         PUT_SUCC(GET_PRED(bp), GET_SUCC(bp));
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
     }
-    #ifdef DEBUG
-        mm_check();
-    #endif
+#ifdef DEBUG
+    mm_check();
+#endif
 }
 
 /* Adjust block size to include overhead and alignment reqs. */
