@@ -48,6 +48,7 @@ team_t team = {
 #define DSIZE 8 /* Double word size (bytes) */
 #define OVERHEAD    8
 #define CHUNKSIZE (1<<12) /* Extend heap by this amount (bytes) */
+#define INITSIZE (1<<6) /* Extend heap by this amount (bytes) in init*/
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))
 #define MIN(x, y) ((x) < (y)? (x) : (y))
@@ -128,7 +129,7 @@ int mm_init(void)//done
         seg_lists[i] = NULL;
     }
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
-    if (extend_heap(CHUNKSIZE/WSIZE) == NULL)
+    if (extend_heap(INITSIZE/WSIZE) == NULL)
         return -1;
     return 0;
 }
