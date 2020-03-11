@@ -140,7 +140,6 @@ int mm_init(void)//done
     #endif
         return 0;
 }
-}
 
 /*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
