@@ -90,7 +90,7 @@ static void insert_node(void *bp, size_t size);
 static void delete_node(void *bp);
 static size_t get_asize(size_t size);
 void *seg_lists[LISTLENGTH];
-static void checklist();
+static void mm_check();
 
 /*
  * extend_heap - extend the heap when it is full.
@@ -136,7 +136,7 @@ int mm_init(void)//done
     if (extend_heap(INITSIZE/WSIZE) == NULL)
         return -1;
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
         return 0;
 }
@@ -178,7 +178,7 @@ void *mm_malloc(size_t size)
             return NULL;
     }
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
         return place(bp, asize);
 }
@@ -244,7 +244,7 @@ static void *coalesce(void *bp)
     }
     insert_node(bp, size);
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
         return bp;
 }
@@ -259,7 +259,7 @@ void mm_free(void *bp)
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
 }
 
@@ -390,7 +390,7 @@ static void insert_node(void *bp, size_t size)
         PUT_SUCC(pre, bp);
     }
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
 }
 
@@ -416,7 +416,7 @@ static void delete_node(void *bp)//done
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
     }
     #ifdef DEBUG
-        checklist();
+        mm_check();
     #endif
 }
 
@@ -431,7 +431,7 @@ static size_t get_asize(size_t size)
     return asize;
 }
 /* Check the status of list. */
-static void checklist()
+static void mm_check()
 {
     int index = 0;
     for(;index < LISTLENGTH; index++){
