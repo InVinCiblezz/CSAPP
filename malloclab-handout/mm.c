@@ -34,7 +34,7 @@ team_t team = {
         /* Second member's email address (leave blank if none) */
         ""
 };
-#define DEBUG 1
+//#define DEBUG 1
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
 #define LISTLENGTH 16
