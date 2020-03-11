@@ -89,6 +89,7 @@ static void insert_node(void *bp, size_t size);
 static void delete_node(void *bp);
 static size_t get_asize(size_t size);
 void *seg_lists[LISTLENGTH];
+static int get_index(size_t size);
 
 static void *extend_heap(size_t words)
 {
@@ -141,7 +142,7 @@ void *mm_malloc(size_t size)
 {
     size_t asize, size_list;    /* Adjusted block size */
     size_t extendsize;          /* Amount to extend heap if no fit */
-    char *bp;
+    char *bp = NULL;
 
     /* Ignore spurious requests */
     if (size == 0)
@@ -346,11 +347,7 @@ static void *realloc_coalesce(void *bp,size_t newSize,int *isNextFree)
 
 static void insert_node(void *bp, size_t size)
 {
-    int index = 0;
-    size_t list_size = size;
-    for (; (list_size > 1) && (index < LISTLENGTH - 1); index++) {
-        list_size >>= 1;
-    }
+    int index = get_index(size);
     char *i = seg_lists[index];
     char *pre = NULL;
     while ((i != NULL) && (size > GET_SIZE(HDRP(i)))) {
@@ -380,10 +377,7 @@ static void insert_node(void *bp, size_t size)
 static void delete_node(void *bp)//done
 {
     size_t list_size = GET_SIZE(HDRP(bp));
-    int index = 0;
-    for (; (list_size > 1) && (index < LISTLENGTH - 1); index++) {
-        list_size >>= 1;
-    }
+    int index = get_index(list_size);
     if (GET_PRED(bp) == NULL) {
         seg_lists[index] = GET_SUCC(bp);
         if (GET_SUCC(bp) != NULL)
@@ -395,3 +389,14 @@ static void delete_node(void *bp)//done
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
     }
 }
+
+static int get_index(size_t size){
+    int index = 0;
+    size_t list_size = size;
+    for (; (list_size > 1) && (index < LISTLENGTH - 1); index++) {
+        list_size >>= 1;
+    }
+    return index;
+}
+
+void mm_checkheap(int);
