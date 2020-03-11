@@ -34,7 +34,7 @@ team_t team = {
         /* Second member's email address (leave blank if none) */
         ""
 };
-
+#define DEBUG 1
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
 #define LISTLENGTH 16
@@ -90,7 +90,11 @@ static void insert_node(void *bp, size_t size);
 static void delete_node(void *bp);
 static size_t get_asize(size_t size);
 void *seg_lists[LISTLENGTH];
+static void checklist();
 
+/*
+ * extend_heap - extend the heap when it is full.
+ */
 static void *extend_heap(size_t words)
 {
     char *bp;
@@ -131,7 +135,11 @@ int mm_init(void)//done
     /* Extend the empty heap with a free block of INITSIZE bytes */
     if (extend_heap(INITSIZE/WSIZE) == NULL)
         return -1;
-    return 0;
+    #ifdef DEBUG
+        checklist();
+    #endif
+        return 0;
+}
 }
 
 /*
@@ -170,9 +178,15 @@ void *mm_malloc(size_t size)
         if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
             return NULL;
     }
-    return place(bp, asize);
+    #ifdef DEBUG
+        checklist();
+    #endif
+        return place(bp, asize);
 }
-
+/*
+ * place - place block.
+ *     Always return the place address
+ */
 static void *place(void *bp, size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(bp));
@@ -198,7 +212,10 @@ static void *place(void *bp, size_t asize)
         return bp;
     }
 }
-
+/*
+ * coalesce - coalesce free blocks.
+ *
+ */
 static void *coalesce(void *bp)
 {
     size_t prev_alloc = GET_ALLOC(HDRP(PREV_BLKP(bp)));
@@ -227,7 +244,10 @@ static void *coalesce(void *bp)
         bp = PREV_BLKP(bp);
     }
     insert_node(bp, size);
-    return bp;
+    #ifdef DEBUG
+        checklist();
+    #endif
+        return bp;
 }
 
 /*
@@ -239,6 +259,9 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
+    #ifdef DEBUG
+        checklist();
+    #endif
 }
 
 /*
@@ -279,7 +302,10 @@ void *mm_realloc(void *ptr, size_t size)
         return bp;
     }
 }
-
+/*
+ * realloc_place - place block.
+ *
+ */
 static void realloc_place(void *bp,size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(bp));
@@ -287,17 +313,10 @@ static void realloc_place(void *bp,size_t asize)
     PUT(FTRP(bp),PACK(csize,1));
 }
 
-/* Adjust block size to include overhead and alignment reqs. */
-static size_t get_asize(size_t size)
-{
-    size_t asize;
-    if (size <= DSIZE)
-        asize = DSIZE + OVERHEAD;
-    else
-        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
-    return asize;
-}
-
+/*
+ * realloc_coalesce - coalesce free blocks.
+ *
+ */
 static void *realloc_coalesce(void *bp, size_t newSize, int *isNextFree)
 {
     size_t  prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
@@ -335,7 +354,10 @@ static void *realloc_coalesce(void *bp, size_t newSize, int *isNextFree)
     }
     return bp;
 }
-
+/*
+ * insert_node - insert the node from seg_lists.
+ *
+ */
 static void insert_node(void *bp, size_t size)
 {
     int index = 0;
@@ -368,7 +390,15 @@ static void insert_node(void *bp, size_t size)
         PUT_PRED(i, bp);
         PUT_SUCC(pre, bp);
     }
+    #ifdef DEBUG
+        checklist();
+    #endif
 }
+
+/*
+ * delete_node - delete the node from seg_lists.
+ *
+ */
 static void delete_node(void *bp)//done
 {
     size_t list_size = GET_SIZE(HDRP(bp));
@@ -385,5 +415,31 @@ static void delete_node(void *bp)//done
     } else {
         PUT_SUCC(GET_PRED(bp), GET_SUCC(bp));
         PUT_PRED(GET_SUCC(bp), GET_PRED(bp));
+    }
+    #ifdef DEBUG
+        checklist();
+    #endif
+}
+
+/* Adjust block size to include overhead and alignment reqs. */
+static size_t get_asize(size_t size)
+{
+    size_t asize;
+    if (size <= DSIZE)
+        asize = DSIZE + OVERHEAD;
+    else
+        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
+    return asize;
+}
+/* Check the status of list. */
+static void checklist()
+{
+    int index = 0;
+    for(;index < LISTLENGTH; index++){
+        char *i = seg_lists[index];
+        while(bp != NULL){
+            printf("seg list %d, addr %p, size %d, next %p, prev %p\n", index, i, GET_SIZE(HDRP(i)), GET_SUCC(i), GET_PRED(i));
+            i = GET_SUCC(i);
+        }
     }
 }
