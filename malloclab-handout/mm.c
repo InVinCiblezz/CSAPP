@@ -182,6 +182,7 @@ void *mm_malloc(size_t size)
 #endif
     return place(bp, asize);
 }
+
 /*
  * place - place block.
  *     Always return the place address
@@ -211,6 +212,7 @@ static void *place(void *bp, size_t asize)
         return bp;
     }
 }
+
 /*
  * coalesce - coalesce free blocks.
  *
@@ -301,6 +303,7 @@ void *mm_realloc(void *ptr, size_t size)
         return bp;
     }
 }
+
 /*
  * realloc_place - place block.
  *
@@ -353,6 +356,7 @@ static void *realloc_coalesce(void *bp, size_t newSize, int *isNextFree)
     }
     return bp;
 }
+
 /*
  * insert_node - insert the node from seg_lists.
  *
@@ -432,6 +436,7 @@ static size_t get_asize(size_t size)
         asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
     return asize;
 }
+
 /* Check the status of list. */
 static void mm_check()
 {
